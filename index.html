@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phone Lock Screen</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* Ảnh nền màn hình khóa ban đầu */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                        url('1000237285.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h2 { font-weight: 400; font-size: 1.2rem; margin-bottom: 30px; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+
+        .dots-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 50px;
+            align-items: center;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .dot.active { 
+            background-color: #ff69b4; 
+            border-color: #ff69b4; 
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.8);
+        }
+
+        .slash {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 2px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 85px);
+            gap: 15px 20px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .key {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .key:active { background-color: rgba(255, 255, 255, 0.4); }
+        .key-label { font-size: 0.6rem; letter-spacing: 2px; margin-top: -5px; opacity: 0.7; }
+        .key-zero { grid-column: 2; }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        /* LỚP PHỦ HIỂN THỊ ẢNH KHI NHẬP ĐÚNG */
+        #success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: none; 
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #success-overlay img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+    </style>
+</head>
+<body>
+
+    <h2>Ngày sinh của chủ Link 🤪</h2>
+
+    <div class="dots-container" id="dots"></div>
+
+    <div class="keypad">
+        <button class="key" onclick="press('1')">1<span class="key-label">&nbsp;</span></button>
+        <button class="key" onclick="press('2')">2<span class="key-label">ABC</span></button>
+        <button class="key" onclick="press('3')">3<span class="key-label">DEF</span></button>
+        <button class="key" onclick="press('4')">4<span class="key-label">GHI</span></button>
+        <button class="key" onclick="press('5')">5<span class="key-label">JKL</span></button>
+        <button class="key" onclick="press('6')">6<span class="key-label">MNO</span></button>
+        <button class="key" onclick="press('7')">7<span class="key-label">PQRS</span></button>
+        <button class="key" onclick="press('8')">8<span class="key-label">TUV</span></button>
+        <button class="key" onclick="press('9')">9<span class="key-label">WXYZ</span></button>
+        
+        <div></div> 
+        <button class="key key-zero" onclick="press('0')">0</button>
+        <button class="action-btn" onclick="backspace()">Xóa</button>
+    </div>
+
+    <div id="success-overlay" onclick="hideOverlay()">
+        <img src="1000237292.jpg" alt="Thành công">
+    </div>
+
+    <script>
+        const CORRECT_PIN = "12/08/2009"; 
+        let rawInput = ""; 
+        let isProcessing = false;
+        const dotsContainer = document.getElementById('dots');
+        const overlay = document.getElementById('success-overlay');
+
+        function initDots() {
+            dotsContainer.innerHTML = '';
+            const structure = [0, 1, 'slash', 2, 3, 'slash', 4, 5, 6, 7];
+            structure.forEach(item => {
+                if (item === 'slash') {
+                    const span = document.createElement('span');
+                    span.classList.add('slash');
+                    span.innerText = '/';
+                    dotsContainer.appendChild(span);
+                } else {
+                    const div = document.createElement('div');
+                    div.classList.add('dot');
+                    div.id = `dot-${item}`;
+                    dotsContainer.appendChild(div);
+                }
+            });
+        }
+        initDots();
+
+        function updateDots() {
+            for (let i = 0; i < 8; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (dot) {
+                    if (i < rawInput.length) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                }
+            }
+        }
+
+        function press(num) {
+            if (isProcessing || rawInput.length >= 8) return;
+            rawInput += num;
+            updateDots();
+            
+            if (rawInput.length === 8) {
+                isProcessing = true;
+                let formatted = rawInput.substring(0,2) + "/" + rawInput.substring(2,4) + "/" + rawInput.substring(4,8);
+                
+                setTimeout(() => {
+                    if (formatted === CORRECT_PIN) {
+                        // Hiện ảnh khi đúng mật khẩu
+                        overlay.style.display = 'flex';
+                    } else {
+                        dotsContainer.classList.add('shake');
+                        if (navigator.vibrate) navigator.vibrate(200);
+                        setTimeout(() => {
+                            dotsContainer.classList.remove('shake');
+                            resetInput();
+                        }, 400);
+                    }
+                }, 350);
+            }
+        }
+
+        function hideOverlay() {
+            overlay.style.display = 'none';
+            resetInput();
+        }
+
+        function backspace() {
+            if (isProcessing || rawInput.length === 0) return;
+            rawInput = rawInput.slice(0, -1);
+            updateDots();
+        }
+
+        function resetInput() {
+            rawInput = "";
+            updateDots();
+            isProcessing = false;
+        }
+    </script>
+</body>
+</html>
