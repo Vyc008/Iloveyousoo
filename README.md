@@ -1,1 +1,174 @@
-# Iloveyousoo
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phone Lock Screen</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Xóa khung xanh khi chạm trên Safari/Chrome mobile */
+            user-select: none; /* Ngăn bôi đen văn bản */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000; /* Màu nền tối sang trọng */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h2 { font-weight: 400; font-size: 1.2rem; margin-bottom: 30px; }
+
+        /* Ô hiển thị mã PIN dạng chấm tròn */
+        .dots-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .dot {
+            width: 15px;
+            height: 15px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .dot.active {
+            background-color: #fff;
+        }
+
+        /* Bàn phím số */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .key {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.15); /* Nút mờ kiểu iOS */
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .key:active {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .key-label { font-size: 0.6rem; letter-spacing: 2px; margin-top: -5px; }
+
+        .action-btn {
+            font-size: 1rem;
+            background: none;
+            border: none;
+            color: white;
+            grid-column: span 1;
+            cursor: pointer;
+        }
+
+        /* Hiệu ứng rung khi sai */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+    </style>
+</head>
+<body>
+
+    <h2>Nhập mật mã</h2>
+
+    <div class="dots-container" id="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+
+    <div class="keypad">
+        <button class="key" onclick="press('1')">1</button>
+        <button class="key" onclick="press('2')">2<span class="key-label">ABC</span></button>
+        <button class="key" onclick="press('3')">3<span class="key-label">DEF</span></button>
+        
+        <button class="key" onclick="press('4')">4<span class="key-label">GHI</span></button>
+        <button class="key" onclick="press('5')">5<span class="key-label">JKL</span></button>
+        <button class="key" onclick="press('6')">6<span class="key-label">MNO</span></button>
+        
+        <button class="key" onclick="press('7')">7<span class="key-label">PQRS</span></button>
+        <button class="key" onclick="press('8')">8<span class="key-label">TUV</span></button>
+        <button class="key" onclick="press('9')">9<span class="key-label">WXYZ</span></button>
+        
+        <div style="display:flex; justify-content:center; align-items:center;"></div>
+        <button class="key" onclick="press('0')">0</button>
+        <button class="action-btn" onclick="backspace()">Xóa</button>
+    </div>
+
+    <script>
+        const CORRECT_PIN = "1234";
+        let currentInput = "";
+        const dots = document.querySelectorAll('.dot');
+
+        function updateDots() {
+            dots.forEach((dot, index) => {
+                if (index < currentInput.length) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function press(num) {
+            if (currentInput.length < 4) {
+                currentInput += num;
+                updateDots();
+                
+                if (currentInput.length === 4) {
+                    setTimeout(checkPwd, 200);
+                }
+            }
+        }
+
+        function backspace() {
+            currentInput = currentInput.slice(0, -1);
+            updateDots();
+        }
+
+        function checkPwd() {
+            if (currentInput === CORRECT_PIN) {
+                alert("🔓 Mở khóa thành công!");
+                currentInput = "";
+                updateDots();
+            } else {
+                // Hiệu ứng rung màn hình và rung điện thoại
+                document.getElementById('dots').classList.add('shake');
+                if (navigator.vibrate) navigator.vibrate(200); 
+
+                setTimeout(() => {
+                    document.getElementById('dots').classList.remove('shake');
+                    currentInput = "";
+                    updateDots();
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>
