@@ -7,13 +7,13 @@
     <style>
         * {
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Xóa khung xanh khi chạm trên Safari/Chrome mobile */
-            user-select: none; /* Ngăn bôi đen văn bản */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000; /* Màu nền tối sang trọng */
+            background-color: #000;
             color: white;
             display: flex;
             flex-direction: column;
@@ -26,11 +26,12 @@
 
         h2 { font-weight: 400; font-size: 1.2rem; margin-bottom: 30px; }
 
-        /* Ô hiển thị mã PIN dạng chấm tròn */
+        /* Ô hiển thị mã PIN */
         .dots-container {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             margin-bottom: 50px;
+            height: 20px;
         }
 
         .dot {
@@ -49,7 +50,8 @@
         .keypad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
+            gap: 20px;
+            justify-items: center;
         }
 
         .key {
@@ -57,7 +59,7 @@
             height: 75px;
             border-radius: 50%;
             border: none;
-            background-color: rgba(255, 255, 255, 0.15); /* Nút mờ kiểu iOS */
+            background-color: rgba(255, 255, 255, 0.15);
             color: white;
             font-size: 1.8rem;
             display: flex;
@@ -72,18 +74,21 @@
             background-color: rgba(255, 255, 255, 0.4);
         }
 
-        .key-label { font-size: 0.6rem; letter-spacing: 2px; margin-top: -5px; }
+        .key-label { font-size: 0.6rem; letter-spacing: 2px; margin-top: -5px; text-transform: uppercase; }
 
         .action-btn {
+            grid-column: 3; /* Đặt nút xóa ở góc dưới bên phải */
             font-size: 1rem;
             background: none;
             border: none;
             color: white;
-            grid-column: span 1;
             cursor: pointer;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Hiệu ứng rung khi sai */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
@@ -97,14 +102,10 @@
     <h2>Ngày sinh của chủ Link🤪</h2>
 
     <div class="dots-container" id="dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-    </div>
+        </div>
 
     <div class="keypad">
-        <button class="key" onclick="press('1')">1</button>
+        <button class="key" onclick="press('1')">1<span class="key-label">&nbsp;</span></button>
         <button class="key" onclick="press('2')">2<span class="key-label">ABC</span></button>
         <button class="key" onclick="press('3')">3<span class="key-label">DEF</span></button>
         
@@ -116,17 +117,28 @@
         <button class="key" onclick="press('8')">8<span class="key-label">TUV</span></button>
         <button class="key" onclick="press('9')">9<span class="key-label">WXYZ</span></button>
         
-        <div style="display:flex; justify-content:center; align-items:center;"></div>
-        <button class="key" onclick="press('0')">0</button>
+        <div></div> <button class="key" onclick="press('0')">0<span class="key-label">&nbsp;</span></button>
         <button class="action-btn" onclick="backspace()">Xóa</button>
     </div>
 
     <script>
         const CORRECT_PIN = "1282009";
         let currentInput = "";
-        const dots = document.querySelectorAll('.dot');
+        const dotsContainer = document.getElementById('dots');
+
+        // Tự động tạo số lượng chấm dựa trên độ dài CORRECT_PIN
+        function createDots() {
+            dotsContainer.innerHTML = "";
+            for (let i = 0; i < CORRECT_PIN.length; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                dotsContainer.appendChild(dot);
+            }
+        }
+        createDots();
 
         function updateDots() {
+            const dots = document.querySelectorAll('.dot');
             dots.forEach((dot, index) => {
                 if (index < currentInput.length) {
                     dot.classList.add('active');
@@ -137,12 +149,12 @@
         }
 
         function press(num) {
-            if (currentInput.length < 4) {
+            if (currentInput.length < CORRECT_PIN.length) {
                 currentInput += num;
                 updateDots();
                 
-                if (currentInput.length === 4) {
-                    setTimeout(checkPwd, 200);
+                if (currentInput.length === CORRECT_PIN.length) {
+                    setTimeout(checkPwd, 300);
                 }
             }
         }
@@ -154,16 +166,16 @@
 
         function checkPwd() {
             if (currentInput === CORRECT_PIN) {
-                alert("còn nhớ sinh nhật anh hả🥹😭");
+                alert("Đúng rồi! Còn nhớ sinh nhật anh hả 🥹😭");
+                // Bạn có thể chuyển hướng trang ở đây: window.location.href = "link_cua_ban.html";
                 currentInput = "";
                 updateDots();
             } else {
-                // Hiệu ứng rung màn hình và rung điện thoại
-                document.getElementById('dots').classList.add('shake');
+                dotsContainer.classList.add('shake');
                 if (navigator.vibrate) navigator.vibrate(200); 
 
                 setTimeout(() => {
-                    document.getElementById('dots').classList.remove('shake');
+                    dotsContainer.classList.remove('shake');
                     currentInput = "";
                     updateDots();
                 }, 300);
